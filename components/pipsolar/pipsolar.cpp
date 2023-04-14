@@ -269,9 +269,7 @@ void Pipsolar::loop() {
         this->state_ = STATE_IDLE;
         break;
       case POLLING_QPIGS2:
-        if (this->ac_output_voltage2_) {
-          this->ac_output_voltage2_->publish_state(value_ac_output_voltage2_);
-
+     
         if (this->pv2_input_current_) {
           this->pv2_input_current_->publish_state(value_pv2_input_current_);
         }
@@ -492,7 +490,6 @@ void Pipsolar::loop() {
         sscanf(                                                                                 // NOLINT
             tmp,                                                                                // NOLINT
             "(%f %f %d",                                                                        // NOLINT
-            &value_ac_output_voltage2_,
             &value_pv2_input_current_, &value_pv2_input_voltage_, &value_pv2_charging_power_);  // NOLINT
         if (this->last_qpigs2_) {
           this->last_qpigs2_->publish_state(tmp);

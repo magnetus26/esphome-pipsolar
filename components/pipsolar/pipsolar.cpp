@@ -112,9 +112,21 @@ void Pipsolar::loop() {
         if (this->current_max_ac_charging_current_) {
           this->current_max_ac_charging_current_->publish_state(value_current_max_ac_charging_current_);
         }
+        //  select for current_max_ac_charging_current
+        if (this->current_max_ac_charging_current_select_) {
+          std::string value = esphome::to_string(value_current_max_ac_charging_current_);
+          this->current_max_ac_charging_current_select_->map_and_publish(value);
+        }
+        
         if (this->current_max_charging_current_) {
           this->current_max_charging_current_->publish_state(value_current_max_charging_current_);
         }
+         //select for current_max_charging_current
+        if (this->current_max_charging_current_select_) {
+          std::string value = esphome::to_string(value_current_max_charging_current_);
+          this->current_max_charging_current_select_->map_and_publish(value);
+        }
+
         if (this->input_voltage_range_) {
           this->input_voltage_range_->publish_state(value_input_voltage_range_);
         }
@@ -143,6 +155,12 @@ void Pipsolar::loop() {
         if (this->charger_source_priority_) {
           this->charger_source_priority_->publish_state(value_charger_source_priority_);
         }
+        // special for charger source priority select
+        if (this->charger_source_priority_select_) {
+          std::string value = esphome::to_string(value_charger_source_priority_);
+          this->charger_source_priority_select_->map_and_publish(value);
+        }
+        
         if (this->parallel_max_num_) {
           this->parallel_max_num_->publish_state(value_parallel_max_num_);
         }
@@ -430,6 +448,21 @@ void Pipsolar::loop() {
         }
         this->state_ = STATE_IDLE;
         break;
+      case POLLING_QBATCD:
+        if (this->discharge_onoff_) {
+          this->discharge_onoff_->publish_state(value_discharge_onoff_);
+        }
+        if (this->discharge_with_standby_onoff_) {
+          this->discharge_with_standby_onoff_->publish_state(value_discharge_with_standby_onoff_);
+        }
+        if (this->charge_onoff_) {
+          this->charge_onoff_->publish_state(value_charge_onoff_);
+        }
+        if (this->charging_discharging_control_select_) {
+          this->charging_discharging_control_select_->map_and_publish(value_charging_discharging_control_select_);
+        }
+        this->state_ = STATE_IDLE;
+        break;   
       case POLLING_QT:
       case POLLING_QMN:
         this->state_ = STATE_IDLE;
@@ -460,6 +493,10 @@ void Pipsolar::loop() {
         if (this->last_qpiri_) {
           this->last_qpiri_->publish_state(tmp);
         }
+        /*
+        this->current_max_ac_charging_current_select_ = value_current_max_ac_charging_current_;
+        this->current_max_charging_current_select_ = value_current_max_charging_current_;
+        */
         this->state_ = STATE_POLL_DECODED;
         break;
       case POLLING_QPIGS:
@@ -715,6 +752,29 @@ void Pipsolar::loop() {
         ESP_LOGD(TAG, "Decode QMN");
         if (this->last_qmn_) {
           this->last_qmn_->publish_state(tmp);
+        }
+        this->state_ = STATE_POLL_DECODED;
+        break;
+      case POLLING_QBATCD:
+        ESP_LOGD(TAG, "Decode QBATCD");
+        // '(000'
+        for (size_t i = 1; i < strlen(tmp); i++) {
+          enabled = tmp[i] == '1';
+          switch (i) {
+            case 1:
+              this->value_discharge_onoff_ = enabled;
+              break;
+            case 2:
+              this->value_discharge_with_standby_onoff_ = enabled;
+              break;
+            case 3:
+              this->value_charge_onoff_ = enabled;
+              break;
+          }
+        }
+        this->value_charging_discharging_control_select_ = tmp;
+        if (this->last_qbatcd_) {
+          this->last_qbatcd_->publish_state(tmp);
         }
         this->state_ = STATE_POLL_DECODED;
         break;
